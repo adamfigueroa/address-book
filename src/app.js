@@ -79,8 +79,15 @@ app.post("/address", (req, res) => {
     .json({ error: "The zipcode is required" });
   }
 
+  if (state && state.length !== 2) {
+    return res.status(400)
+    .json({ error: "Please use a valid state code (i.e. AL, CO, FL, etc...)" });
+  }
+
   res.send("okay okay I got it.");
 });
+
+
 
 app.use(function errorHandler(error, req, res, next) {
   let response;

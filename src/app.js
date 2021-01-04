@@ -4,8 +4,8 @@ const morgan = require("morgan");
 const cors = require("cors");
 const helmet = require("helmet");
 const { NODE_ENV } = require("./config");
-const { PORT } = require('./config')
-const { v4: uuid } = require('uuid');
+const { PORT } = require("./config");
+const { v4: uuid } = require("uuid");
 
 const app = express();
 const morganOption = NODE_ENV === "production" ? "tiny" : "common";
@@ -15,18 +15,29 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// app.use(
-//   (validateBearerToken = (req, res, next) => {
-//     const apiToken = process.env.API_TOKEN;
-//     const authToken = req.get("Authorization");
-//     if (!authToken || authToken.split(" ")[1] !== apiToken) {
-//       return res.status(401).json({ error: "Unauthorized access" });
-//     }
-//     next();
-//   })
-// );
+app.use(
+  (validateBearerToken = (req, res, next) => {
+    const apiToken = process.env.API_TOKEN;
+    const authToken = req.get("Authorization");
+    if (!authToken || authToken.split(" ")[1] !== apiToken) {
+      return res.status(401).json({ error: "Unauthorized access" });
+    }
+    next();
+  })
+);
 
-let addressBook = [];
+const addressBook = [
+  {
+    "id": "test",
+    "firstName": "Reba",
+    "lastName": "McDougalheimer",
+    "address1": "1234 street",
+    "address2": "suite 20",
+    "city": "Bend",
+    "state": "OR",
+    "zip": "97701",
+  },
+];
 
 app.get("/address", (req, res) => {
   res.json(addressBook);
@@ -44,49 +55,39 @@ app.post("/address", (req, res) => {
   } = req.body;
 
   if (!firstName) {
-    return res
-    .status(400)
-    .json({ error: "First name is required" });
+    return res.status(400).json({ error: "First name is required" });
   }
 
   if (!lastName) {
-    return res
-    .status(400)
-    .json({ error: "Last name is required" });
+    return res.status(400).json({ error: "Last name is required" });
   }
 
   if (!address1) {
-    return res
-    .status(400)
-    .json({ error: "Address is required" });
+    return res.status(400).json({ error: "Address is required" });
   }
 
   if (!city) {
-    return res
-    .status(400)
-    .json({ error: "City is required" });
+    return res.status(400).json({ error: "City is required" });
   }
 
   if (!state) {
-    return res
-    .status(400)
-    .json({ error: "State is required" });
+    return res.status(400).json({ error: "State is required" });
   }
 
   if (!zip) {
-    return res
-    .status(400)
-    .json({ error: "The zipcode is required" });
+    return res.status(400).json({ error: "The zipcode is required" });
   }
 
   if (state && state.length !== 2) {
-    return res.status(400)
-    .json({ error: "Please use a valid state code (i.e. AL, CO, FL, etc...)" });
+    return res.status(400).json({
+      error: "Please use a valid state code (i.e. AL, CO, FL, etc...)",
+    });
   }
 
   if (zip && zip.length !== 5) {
-    return res.status(400)
-    .json({ error: "Please use a valid 5 digit zip code" });
+    return res
+      .status(400)
+      .json({ error: "Please use a valid 5 digit zip code" });
   }
 
   const id = uuid();
@@ -98,15 +99,29 @@ app.post("/address", (req, res) => {
     address2,
     city,
     state,
-    zip
-  }
+    zip,
+  };
   addressBook.push(newAddress);
   res
-  .status(201)
-  .location(`http://localhost:${PORT}/address/${id}`)
-  .json({ id: id })
+    .status(201)
+    .location(`http://localhost:${PORT}/address/${id}`)
+    .json({ id: id });
 });
 
+app.delete("/address/:userId", (req, res) => {
+  const { userId } = req.params;
+  const indexOfAddress = addressBook.findIndex(
+    address => address.id === userId
+  );
+  if (indexOfAddress === -1) {
+    return res.status(404).send("Address not found");
+  }
+  addressBook.splice(indexOfAddress, 1);
+  res
+  .status(204)
+  .send("successfully deleted")
+  .end();
+});
 
 app.use(function errorHandler(error, req, res, next) {
   let response;

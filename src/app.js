@@ -4,9 +4,10 @@ const morgan = require("morgan");
 const cors = require("cors");
 const helmet = require("helmet");
 const { NODE_ENV } = require("./config");
+const { PORT } = require('./config')
+const { v4: uuid } = require('uuid');
 
 const app = express();
-
 const morganOption = NODE_ENV === "production" ? "tiny" : "common";
 
 app.use(morgan(morganOption));
@@ -32,7 +33,6 @@ app.get("/address", (req, res) => {
 });
 
 app.post("/address", (req, res) => {
-  console.log(req.body);
   const {
     firstName,
     lastName,
@@ -84,9 +84,28 @@ app.post("/address", (req, res) => {
     .json({ error: "Please use a valid state code (i.e. AL, CO, FL, etc...)" });
   }
 
-  res.send("okay okay I got it.");
-});
+  if (zip && zip.length !== 5) {
+    return res.status(400)
+    .json({ error: "Please use a valid 5 digit zip code" });
+  }
 
+  const id = uuid();
+  const newAddress = {
+    id,
+    firstName,
+    lastName,
+    address1,
+    address2,
+    city,
+    state,
+    zip
+  }
+  addressBook.push(newAddress);
+  res
+  .status(201)
+  .location(`http://localhost:${PORT}/address/${id}`)
+  .json({ id: id })
+});
 
 
 app.use(function errorHandler(error, req, res, next) {

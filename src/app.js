@@ -43,7 +43,7 @@ app.get("/address", (req, res) => {
   res.json(addressBook);
 });
 
-app.post("/address", (req, res) => {
+app.post("/address", validateBearerToken, (req, res) => {
   const {
     firstName,
     lastName,
@@ -108,7 +108,7 @@ app.post("/address", (req, res) => {
     .json({ id: id });
 });
 
-app.delete("/address/:userId", (req, res) => {
+app.delete("/address/:userId", validateBearerToken, (req, res) => {
   const { userId } = req.params;
   const indexOfAddress = addressBook.findIndex(
     address => address.id === userId
